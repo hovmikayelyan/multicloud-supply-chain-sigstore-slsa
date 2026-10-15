@@ -1,0 +1,12 @@
+# Complementary GCP control (managed): Binary Authorization policy, applied with
+#   gcloud container binauthz policy import policy/gcp-binary-authorization.yaml
+# Only images attested by the CI attestor are admitted to GKE; everything else is blocked and audited.
+# Create the attestor + KMS key and have CI create attestations after the cosign verify step succeeds.
+defaultAdmissionRule:
+  evaluationMode: REQUIRE_ATTESTATION
+  enforcementMode: ENFORCED_BLOCK_AND_AUDIT_LOG
+  requireAttestationsBy:
+    - projects/MY_PROJECT/attestors/github-ci-signed
+globalPolicyEvaluationMode: ENABLE
+admissionWhitelistPatterns:
+  - namePattern: gcr.io/gke-release/*

@@ -1,0 +1,46 @@
+# AWS (EKS): admit only images signed keyless by THIS repo's workflow on main,
+# and carrying a signed CycloneDX SBOM + SLSA provenance attestation. Everything else is rejected.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-images
+spec:
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: verify-cosign-keyless
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "123456789012.dkr.ecr.eu-west-1.amazonaws.com/*"
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - entries:
+                - keyless:
+                    issuer: https://token.actions.githubusercontent.com
+                    subject: "https://github.com/OWNER/REPO/.github/workflows/supply-chain.yml@refs/heads/main"
+                    rekor:
+                      url: https://rekor.sigstore.dev
+          attestations:
+            - type: https://cyclonedx.org/bom
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: "https://github.com/OWNER/REPO/.github/workflows/supply-chain.yml@refs/heads/main"
+                        rekor:
+                          url: https://rekor.sigstore.dev
+            - type: https://slsa.dev/provenance/v1
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: "https://github.com/OWNER/REPO/.github/workflows/supply-chain.yml@refs/heads/main"
+                        rekor:
+                          url: https://rekor.sigstore.dev

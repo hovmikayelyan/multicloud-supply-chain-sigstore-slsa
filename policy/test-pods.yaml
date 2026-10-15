@@ -1,0 +1,16 @@
+# Demo: the first Pod must be REJECTED (unsigned), the second ADMITTED (replace digest with a real signed one).
+apiVersion: v1
+kind: Pod
+metadata: {name: unsigned-should-fail}
+spec:
+  containers:
+    - name: c
+      image: europe-west1-docker.pkg.dev/MY_PROJECT/MY_REPO/unsigned:latest
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: signed-should-pass}
+spec:
+  containers:
+    - name: c
+      image: europe-west1-docker.pkg.dev/MY_PROJECT/MY_REPO/sample-app@sha256:REPLACE_ME
